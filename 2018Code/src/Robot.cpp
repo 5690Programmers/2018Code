@@ -23,9 +23,12 @@
  * instead if you're new.
  */
 class Robot: public frc::SampleRobot {
+
+	frc::PWMTalonSRX Arm{4};
+
+
 	frc::PWMTalonSRX front_left {0};
 	frc::PWMTalonSRX back_left {1};
-
 	frc::PWMTalonSRX front_right {3};
 	frc::PWMTalonSRX back_right {2};
 
@@ -83,6 +86,29 @@ public:
 		while (IsOperatorControl() && IsEnabled()) {
 			// drive with arcade style (use right stick)
 			myRobot.ArcadeDrive(-stick.GetY(), stick.GetX(), false);
+
+
+			if(stick.GetButton(5))
+			{
+				Arm.Set(.5);
+			}
+			else
+			{
+				Arm.Set(0);
+			}
+
+			if(stick.GetButton(6))
+			{
+				Arm.Set(-0.5);
+			}
+			else
+			{
+				Arm.Set(0):
+			}
+
+
+
+
 
 			frc::Wait(0.005);
 		}
