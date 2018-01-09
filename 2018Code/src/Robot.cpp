@@ -23,17 +23,14 @@
  * instead if you're new.
  */
 class Robot: public frc::SampleRobot {
-	frc::PWMTalonSRX top_left {0};
-	frc::PWMTalonSRX front_left {1};
-	frc::PWMTalonSRX back_left {2};
-	frc::PWMTalonSRX top_right {3};
-	frc::PWMTalonSRX front_right {4};
-	frc::PWMTalonSRX back_right {5};
+	frc::PWMTalonSRX front_left {0};
+	frc::PWMTalonSRX back_left {1};
 
-	//comments test
+	frc::PWMTalonSRX front_right {3};
+	frc::PWMTalonSRX back_right {2};
 
-	frc::SpeedControllerGroup left{top_left, front_left, back_left};
-	frc::SpeedControllerGroup right{top_right, front_right, back_right};
+	frc::SpeedControllerGroup left{front_left, back_left};
+	frc::SpeedControllerGroup right{front_right, back_right};
 
 	frc::DifferentialDrive myRobot {right, left};
 	frc::Joystick stick { 0 };
@@ -43,7 +40,6 @@ class Robot: public frc::SampleRobot {
 
 public:
 	Robot() {
-		//Note SmartDashboard is not initialized here, wait until RobotInit to make SmartDashboard calls
 		myRobot.SetExpiration(0.1);
 	}
 
@@ -53,17 +49,7 @@ public:
 		frc::SmartDashboard::PutData("Auto Modes", &chooser);
 	}
 
-	/*
-	 * This autonomous (along with the chooser code above) shows how to select
-	 * between different autonomous modes using the dashboard. The sendable
-	 * chooser code works with the Java SmartDashboard. If you prefer the
-	 * LabVIEW Dashboard, remove all of the chooser code and uncomment the
-	 * GetString line to get the auto name from the text box below the Gyro.
-	 *
-	 * You can add additional auto modes by adding additional comparisons to the
-	 * if-else structure below with additional strings. If using the
-	 * SendableChooser make sure to add them to the chooser code above as well.
-	 */
+
 	void Autonomous() {
 		auto autoSelected = chooser.GetSelected();
 		// std::string autoSelected = frc::SmartDashboard::GetString("Auto Selector", autoNameDefault);
@@ -91,24 +77,17 @@ public:
 		}
 	}
 
-	/*
-	 * Runs the motors with arcade steering.
-	 *
-	 */
+
 	void OperatorControl() override {
 		myRobot.SetSafetyEnabled(true);
 		while (IsOperatorControl() && IsEnabled()) {
 			// drive with arcade style (use right stick)
 			myRobot.ArcadeDrive(-stick.GetY(), stick.GetX(), false);
 
-			// wait for a motor update time
 			frc::Wait(0.005);
 		}
 	}
 
-	/*
-	 * Runs during test mode
-	 */
 	void Test() override {
 
 	}
