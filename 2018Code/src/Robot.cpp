@@ -2,6 +2,12 @@
 #include <memory>
 #include <string>
 
+
+#include <XboxController.h>
+#include <CameraServer.h>
+#include <ADXRS450_Gyro.h>
+#include <ADXL362.h>
+
 #include <Joystick.h>
 #include <SampleRobot.h>
 #include <SmartDashboard/SendableChooser.h>
@@ -24,7 +30,22 @@
  */
 class Robot: public frc::SampleRobot {
 
+
+
+
+	//Controllers
+	frc::XboxController Xbox{1};
+	frc::Joystick Stick {0};
+
+	//Add-ons
+	frc::ADXRS450_Gyro Gyro;
+
+	//Motors
 	frc::PWMTalonSRX Arm{4};
+	frc::PWMTalonSRX Intake_one{5}
+	frc::PWMTalonSRX Intake_two{6}
+
+	frc::SpeedControllerGroup Intake{Intake_one, Intake_two};
 
 
 	frc::PWMTalonSRX front_left {0};
@@ -36,10 +57,16 @@ class Robot: public frc::SampleRobot {
 	frc::SpeedControllerGroup right{front_right, back_right};
 
 	frc::DifferentialDrive myRobot {right, left};
-	frc::Joystick stick { 0 };
-	frc::SendableChooser<std::string> chooser;
-	const std::string autoNameDefault = "Default";
-	const std::string autoNameCustom = "My Auto";
+	//Dashboard Choosers
+	frc::SendableChooser<std::string> side;
+	frc::SendableChooser<std::string> start;
+	//Dashboard Options
+	const std::string red = "Red";
+	const std::string blue = "Blue";
+	const std::string basic = "Go Forward";
+	const std::string startright = "Right Start";
+	const std::string startmid = "Middle Start";
+	const std::string startleft = "Left Start";
 
 public:
 	Robot() {
@@ -47,36 +74,52 @@ public:
 	}
 
 	void RobotInit() {
-		chooser.AddDefault(autoNameDefault, autoNameDefault);
-		chooser.AddObject(autoNameCustom, autoNameCustom);
-		frc::SmartDashboard::PutData("Auto Modes", &chooser);
+		side.AddDefault(red, red);
+		side.AddObject(blue, blue);
+		side.AddObject(basic, basic);
+		start.AddDefault(startright, startright);
+		start.AddObject(startmid, startmid);
+		start.AddObject(startleft, startleft);
+		frc::SmartDashboard::PutData("Color Selected", &side);
+		frc::SmartDashboard::PutData("Start Position Selected", &start);
+		frc::CameraServer::GetInstance()->StartAutomaticCapture();
+		gyro.Reset();
+
 	}
 
 
 	void Autonomous() {
-		auto autoSelected = chooser.GetSelected();
-		// std::string autoSelected = frc::SmartDashboard::GetString("Auto Selector", autoNameDefault);
-		std::cout << "Auto selected: " << autoSelected << std::endl;
 
-		if (autoSelected == autoNameCustom) {
-			// Custom Auto goes here
-			std::cout << "Running custom Autonomous" << std::endl;
-			myRobot.SetSafetyEnabled(false);
-			myRobot.CurvatureDrive(0.5, 0.0, false); //go straight for 1 second
-			frc::Wait(1.0);                // for 2 seconds
-			myRobot.CurvatureDrive(0.5,-1, true);//turn for 0.5 seconds
-			frc::Wait(0.5);
-			myRobot.CurvatureDrive(0.5, 0.0, false); //go straight for 1 second
-			frc::Wait(1.0);
-			myRobot.CurvatureDrive(0.0, 0.0, false);  // stop robot
-			frc::Wait(1.0);
-		} else {
-			// Default Auto goes here
+		auto Start = start.GetSelected();
+		auto Color = side.GetSelected();
+
+		std::cout << "Auto selected:Start: " << Start << "Color: " << std::endl;
+
+		if ((Start == startleft) && (Color == blue)) {
+			//make auto for left start blue
+
+		} else if ((Start == startmid) && (Color == blue)) {
+			//make auto for mid start blue
+
+		} else if ((Start == startright) && (Color == blue)) {
+			//make auto for right start blue
+
+		} else if ((Start == startleft) && (Color == red)) {
+			//make auto for left start red
+
+		} else if ((Start == startmid) && (Color == red)) {
+			//make auto for mid start red
+
+		} else if ((Start == startright) && (Color == red)) {
+			//make auto for right start red
+
+		}else  {
+			// Default Auto goes here. What do we want it to do no matter what?
 			std::cout << "Running default Autonomous" << std::endl;
 			myRobot.SetSafetyEnabled(false);
-			myRobot.CurvatureDrive(-0.5, 0.0, false); // drive forwards half speed
-			frc::Wait(2.0);                // for 2 seconds
-			myRobot.CurvatureDrive(0.0, 0.0, false);  // stop robot
+			myRobot.Drive(-0.25, 0.0);
+			frc::Wait(8.0);
+			myRobot.Drive(0.0, 0.0);
 		}
 	}
 
@@ -84,11 +127,27 @@ public:
 	void OperatorControl() override {
 		myRobot.SetSafetyEnabled(true);
 		while (IsOperatorControl() && IsEnabled()) {
-			// drive with arcade style (use right stick)
-			myRobot.ArcadeDrive(-stick.GetY(), stick.GetX(), false);
+			//myRobot.ArcadeDrive(-stick.GetY(), stick.GetX(), false); //Joy stick controls(right stick if xbox)
+			myRobot.TankDrive(Xbox.GetY(), Xbox.GetX()); //Not sure this works. Test this eventually/
 
 
-			if(stick.GetButton(5))
+
+			if (Xbox.GetTriggerAxis(XboxController::JoystickHand(0))) //0 is left trigger
+			{
+				Intake.Set(-0.5);
+			} else {
+				Intake.Set(0);
+			}
+			if (Xbox.GetTriggerAxis(XboxController::JoystickHand(1)))//1 is right trigger
+			{
+				Intake.Set(0.5);
+			} else {
+				Intake.Set(0)
+			}
+
+
+			//Move elevator arm up(X) and down(B)
+			if(Xbox.GetXButton())
 			{
 				Arm.Set(.5);
 			}
@@ -97,7 +156,7 @@ public:
 				Arm.Set(0);
 			}
 
-			if(stick.GetButton(6))
+			if(stick.GetBButton())
 			{
 				Arm.Set(-0.5);
 			}
@@ -105,10 +164,6 @@ public:
 			{
 				Arm.Set(0):
 			}
-
-
-
-
 
 			frc::Wait(0.005);
 		}
